@@ -1,5 +1,5 @@
 /**
- * ZamZam Trims (BD) Limited - Global Application Controller (site.js)
+ * Rigid Pro Limited - Global Application Controller (site.js)
  * -------------------------------------------------------------------
  * Global application interactions, theme switcher, and persistence.
  */

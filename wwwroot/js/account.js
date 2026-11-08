@@ -1,5 +1,5 @@
 /**
- * ZamZam Trims (BD) Limited - Account Controller Script (account.js)
+ * Rigid Pro Limited - Account Controller Script (account.js)
  * ------------------------------------------------------------------
  * Handles direct Ajax login API call to:
  * {ApiBaseUrl}/api/Auth/Login

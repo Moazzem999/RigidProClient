@@ -1,5 +1,5 @@
 /**
- * ZamZam Trims (BD) Limited - Employee Tracking & Location History Module
+ * Rigid Pro Limited - Employee Tracking & Location History Module
  * ----------------------------------------------------------------------
  * 1. Employee Search by Name:
  *    GET {ApiBaseUrl}/api/Employees/GetByName/{name}

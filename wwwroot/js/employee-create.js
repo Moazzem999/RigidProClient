@@ -1,5 +1,5 @@
 /**
- * ZamZam Trims (BD) Limited - Employee Creation (employee-create.js)
+ * Rigid Pro Limited - Employee Creation (employee-create.js)
  * ------------------------------------------------------------------
  * Handles employee creation form validation, file previews, and multipart/form-data POST to:
  * {ApiBaseUrl}/api/Employees

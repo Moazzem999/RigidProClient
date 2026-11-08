@@ -1,5 +1,5 @@
 /**
- * ZamZam Trims (BD) Limited - Employee Management (employee.js)
+ * Rigid Pro Limited - Employee Management (employee.js)
  * -------------------------------------------------------------
  * Populates and manages the Employee directory using:
  * {ApiBaseUrl}/api/Employees/GetAll?SearchTerm={term}&PageNumber={page}&PageSize={size}
