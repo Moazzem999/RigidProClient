@@ -1,0 +1,823 @@
+@{
+    Layout = "_DashboardLayout";
+    ViewData["Title"] = "Employee Tracking";
+    var apiBaseUrl = ViewBag.ApiBaseUrl ?? "https://localhost:7148";
+}
+
+<!-- Leaflet Map CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+<style>
+    /* Search Box */
+    .tracking-search-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+        margin-bottom: 1.5rem;
+    }
+    .tracking-search-box-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    .tracking-search-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+    .tracking-search-input-group:focus-within {
+        background: #ffffff;
+        border-color: var(--dash-primary-blue);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+    .tracking-search-icon-left {
+        padding-left: 1.2rem;
+        padding-right: 0.65rem;
+        color: #64748b;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+    }
+    .tracking-search-input-group:focus-within .tracking-search-icon-left {
+        color: var(--dash-primary-blue);
+    }
+    .tracking-search-input {
+        border: none;
+        background: transparent;
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: #0f172a;
+        padding: 0.85rem 0.5rem;
+        flex: 1;
+        outline: none;
+        width: 100%;
+    }
+    .tracking-search-input::placeholder {
+        color: #94a3b8;
+    }
+    .tracking-search-action-area {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-right: 0.6rem;
+    }
+    .tracking-search-clear-btn {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 1.15rem;
+        cursor: pointer;
+        padding: 0.25rem;
+        display: none;
+    }
+    .tracking-search-clear-btn:hover {
+        color: #ef4444;
+    }
+    .tracking-search-spinner {
+        color: var(--dash-primary-blue);
+        width: 1.2rem;
+        height: 1.2rem;
+    }
+    .tracking-search-submit-btn {
+        background: var(--dash-primary-blue);
+        color: #ffffff;
+        border: none;
+        font-weight: 600;
+        font-size: 0.92rem;
+        padding: 0.55rem 1.25rem;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.15s ease;
+    }
+    .tracking-search-submit-btn:hover {
+        background: #1d4ed8;
+    }
+
+    /* Suggestions Dropdown */
+    .tracking-search-suggestions {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        z-index: 1050;
+        overflow: hidden;
+        display: none;
+    }
+    .tracking-search-suggestions.show {
+        display: block;
+    }
+    .suggestions-header {
+        padding: 0.6rem 1rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #edf2f7;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #64748b;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .suggestions-list {
+        max-height: 280px;
+        overflow-y: auto;
+    }
+    .tracking-suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+    .tracking-suggestion-item:last-child {
+        border-bottom: none;
+    }
+    .tracking-suggestion-item:hover,
+    .tracking-suggestion-item.active {
+        background-color: #eff6ff;
+    }
+    .suggestion-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        background: #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .suggestion-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .suggestion-avatar-fallback {
+        font-weight: 700;
+        font-size: 0.88rem;
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .suggestion-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* Selected Employee Summary Card */
+    .selected-emp-card {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%);
+        border-radius: 16px;
+        padding: 1.25rem 1.75rem;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+    }
+    .selected-emp-avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        background: #1e293b;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .selected-emp-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .selected-emp-avatar-fallback {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #93c5fd;
+    }
+
+    /* Location History Table Card */
+    .history-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .history-card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #edf2f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .history-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .history-filters {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* Table Styles */
+    .history-table th {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+        background-color: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.85rem 1rem;
+        white-space: nowrap;
+    }
+    .history-table td {
+        font-size: 0.88rem;
+        color: #1e293b;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+    .history-table tr:hover td {
+        background-color: #f8fafc;
+    }
+
+    /* State Boxes */
+    .tracking-state-box {
+        padding: 3.5rem 1.5rem;
+        text-align: center;
+    }
+    .tracking-state-icon {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1rem auto;
+    }
+    .tracking-state-icon.initial {
+        background: #eff6ff;
+        color: var(--dash-primary-blue);
+    }
+    .tracking-state-icon.empty {
+        background: #f8fafc;
+        color: #94a3b8;
+    }
+    .tracking-state-icon.error {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+    /* Pagination */
+    .history-pagination-wrap {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #edf2f7;
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .pagination-custom .page-link {
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-radius: 6px;
+        margin: 0 2px;
+    }
+    .pagination-custom .page-link:hover {
+        background-color: #eff6ff;
+        color: var(--dash-primary-blue);
+    }
+    .pagination-custom .page-item.active .page-link {
+        background-color: var(--dash-primary-blue);
+        border-color: var(--dash-primary-blue);
+        color: #ffffff;
+    }
+    .pagination-custom .page-item.disabled .page-link {
+        color: #cbd5e1;
+        background-color: #f8fafc;
+    }
+    .spin-animation {
+        animation: spin 0.8s linear infinite;
+    }
+    @@keyframes spin {
+        100% { transform: rotate(360deg); }
+    }
+
+    /* View Route Map Button */
+    .btn-route-map {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border: 1px solid #059669;
+        color: #ffffff;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    }
+    .btn-route-map:hover,
+    .btn-route-map:focus {
+        background: linear-gradient(135deg, #047857 0%, #059669 100%);
+        border-color: #047857;
+        color: #ffffff;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+        transform: translateY(-1px);
+    }
+    .btn-route-map:active {
+        transform: translateY(0);
+    }
+
+    /* Route Map Modal */
+    .route-modal-content {
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+    .route-modal-header {
+        background: #ffffff;
+        padding: 1.15rem 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .route-modal-icon-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .route-map-toolbar {
+        background: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.65rem 1.25rem;
+        z-index: 10;
+        position: relative;
+    }
+    .btn-map-layer.active {
+        background-color: var(--dash-primary-blue) !important;
+        border-color: var(--dash-primary-blue) !important;
+        color: #ffffff !important;
+    }
+    .route-legend-badge {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .route-legend-badge.start {
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+    .route-legend-badge.waypoint {
+        background: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+    }
+    .route-legend-badge.end {
+        background: #ef4444;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+    }
+    #routeMapCanvas {
+        height: 560px;
+        width: 100%;
+        background-color: #f1f5f9;
+        z-index: 1;
+    }
+
+    /* Custom Leaflet Map Pins */
+    .route-pin {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: #ffffff;
+        font-weight: 700;
+        font-family: inherit;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+    .route-pin:hover {
+        transform: scale(1.2);
+    }
+    .route-pin-start {
+        background: #10b981;
+        border: 3px solid #ffffff;
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+    .route-pin-end {
+        background: #ef4444;
+        border: 3px solid #ffffff;
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
+        animation: route-pulse 2s infinite;
+    }
+    .route-pin-mid {
+        background: #2563eb;
+        border: 2px solid #ffffff;
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+    }
+    @@keyframes route-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .route-popup-card {
+        padding: 8px 12px;
+        min-width: 170px;
+        font-family: inherit;
+    }
+    .route-popup-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .route-popup-line {
+        font-size: 0.78rem;
+        color: #475569;
+        margin-bottom: 2px;
+    }
+</style>
+
+<!-- Page Root Container -->
+<div class="employee-page-wrapper" id="employeeTrackingContainer" data-api-base-url="@apiBaseUrl">
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="dash-breadcrumb">
+        <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+        <span class="separator"><i class="bi bi-chevron-right"></i></span>
+        <span>Employee</span>
+        <span class="separator"><i class="bi bi-chevron-right"></i></span>
+        <span class="current">Tracking</span>
+    </nav>
+
+    <!-- Page Heading -->
+    <div class="dashboard-heading-area mb-4">
+        <h1 class="dashboard-title">Employee Tracking</h1>
+        <p class="dashboard-subtitle">Search and select an employee to view real-time and historical location logs.</p>
+    </div>
+
+    <!-- 1. Employee Search Box -->
+    <div class="tracking-search-card">
+        <form id="trackingSearchForm" class="tracking-search-box-wrapper" autocomplete="off" onsubmit="return false;">
+            <div class="tracking-search-input-group">
+                <div class="tracking-search-icon-left">
+                    <i class="bi bi-search"></i>
+                </div>
+                <input type="text"
+                       id="trackingSearchInput"
+                       class="tracking-search-input"
+                       placeholder="Search employee by name (e.g. Jubayer)..."
+                       aria-label="Search employee by name"
+                       autocomplete="off" />
+
+                <div class="tracking-search-action-area">
+                    <!-- Spinner -->
+                    <div id="trackingSearchSpinner" class="spinner-border tracking-search-spinner d-none" role="status">
+                        <span class="visually-hidden">Searching...</span>
+                    </div>
+
+                    <!-- Clear Button -->
+                    <button type="button" id="trackingSearchClear" class="tracking-search-clear-btn" title="Clear">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+
+                    <!-- Search Button -->
+                    <button type="submit" id="trackingSearchSubmitBtn" class="tracking-search-submit-btn">
+                        <i class="bi bi-search"></i>
+                        <span>Search</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Autocomplete Suggestions Dropdown -->
+            <div id="trackingSearchSuggestions" class="tracking-search-suggestions">
+                <div class="suggestions-header">
+                    <span><i class="bi bi-people me-1"></i> Matching Employees</span>
+                    <span id="trackingSuggestionsCount" class="badge bg-primary text-white">0</span>
+                </div>
+                <div id="trackingSuggestionsList" class="suggestions-list">
+                    <!-- Suggestions injected by JS -->
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 2. Selected Employee Header Banner (Shown when an employee is selected) -->
+    <div id="selectedEmployeeBanner" class="selected-emp-card d-none">
+        <div class="d-flex align-items-center gap-3">
+            <div class="selected-emp-avatar" id="selectedEmpAvatarWrapper">
+                <div class="selected-emp-avatar-fallback">JH</div>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="fs-4 fw-bold mb-0 text-white" id="selectedEmpName">Employee Name</h3>
+                    <span class="badge bg-primary text-white" id="selectedEmpDesignation">Designation</span>
+                    <span class="badge bg-white text-dark fw-semibold" id="selectedEmpId">#1</span>
+                </div>
+                <div class="small text-white-50 d-flex align-items-center gap-3 flex-wrap">
+                    <span id="selectedEmpMobile"><i class="bi bi-telephone me-1"></i> —</span>
+                    <span id="selectedEmpEmail"><i class="bi bi-envelope me-1"></i> —</span>
+                </div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-outline-light btn-sm rounded-3 d-inline-flex align-items-center gap-1" id="btnChangeEmployee">
+            <i class="bi bi-search"></i>
+            <span>Change Employee</span>
+        </button>
+    </div>
+
+    <!-- 3. Initial Empty State (When no employee is selected yet) -->
+    <div id="trackingInitialState" class="history-card">
+        <div class="tracking-state-box">
+            <div class="tracking-state-icon initial">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">Select an Employee to View Location History</h4>
+            <p class="text-muted mx-auto mb-0" style="max-width: 480px;">
+                Use the search box above to search an employee by name. Selecting an employee will automatically load their location history table.
+            </p>
+        </div>
+    </div>
+
+    <!-- 4. Location History Table Card (Shown when an employee is selected) -->
+    <div id="locationHistoryCard" class="history-card d-none">
+
+        <!-- Card Toolbar: Title, Date Filter & Controls -->
+        <div class="history-card-header">
+            <div class="d-flex align-items-center gap-2">
+                <div class="p-2 rounded-3 bg-danger-subtle text-danger fs-5 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                    <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div>
+                    <h3 class="history-card-title">
+                        Location History
+                        <span class="badge bg-primary text-white fs-6 fw-semibold rounded-pill px-2 py-1 ms-1" id="historyTotalBadge">0 Logs</span>
+                    </h3>
+                    <small class="text-muted" id="historySubtitle">Location logs for selected employee</small>
+                </div>
+            </div>
+
+            <!-- Filter Controls -->
+            <div class="history-filters">
+                <!-- Date Filters -->
+                <div class="d-flex align-items-center gap-1">
+                    <label for="historyFromDate" class="small text-muted text-nowrap">From:</label>
+                    <input type="date" id="historyFromDate" class="form-control form-control-sm" style="width: 135px;" title="From date" />
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <label for="historyToDate" class="small text-muted text-nowrap">To:</label>
+                    <input type="date" id="historyToDate" class="form-control form-control-sm" style="width: 135px;" title="To date" />
+                </div>
+                <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" id="btnFilterHistory">
+                    <i class="bi bi-funnel-fill"></i>
+                    <span>Filter</span>
+                </button>
+
+                <!-- Page Size -->
+                <div class="d-flex align-items-center gap-1 ms-1">
+                    <select id="historyPageSize" class="form-select form-select-sm" style="width: 75px;">
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <!-- Refresh Button -->
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="btnRefreshHistory" title="Refresh location history">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+
+                <!-- View Route Map Button -->
+                <button type="button" class="btn btn-route-map btn-sm d-inline-flex align-items-center gap-1.5 ms-1" id="btnViewRouteMap" title="View route on interactive Google Map">
+                    <i class="bi bi-map-fill"></i>
+                    <span>View Route Map</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table Responsive Container -->
+        <div class="table-responsive">
+            <table class="table history-table align-middle mb-0" id="historyTable">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;"># ID</th>
+                        <th style="min-width: 180px;">Recorded Time</th>
+                        <th style="min-width: 220px;">Coordinates (Lat, Long)</th>
+                        <th style="width: 130px;">Battery</th>
+                        <th class="text-end" style="width: 140px;">Map Action</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <!-- Dynamic Location Rows injected by JS -->
+                </tbody>
+            </table>
+
+            <!-- Table Loading State -->
+            <div id="historyLoadingState" class="tracking-state-box d-none">
+                <div class="spinner-border text-primary mb-3" style="width: 2.5rem; height: 2.5rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">Loading Location Logs...</h5>
+                <p class="text-muted small mb-0">Querying location history records from server.</p>
+            </div>
+
+            <!-- Table Empty State -->
+            <div id="historyEmptyState" class="tracking-state-box d-none">
+                <div class="tracking-state-icon empty">
+                    <i class="bi bi-geo"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">No Location Logs Found</h5>
+                <p class="text-muted small mx-auto mb-0" style="max-width: 440px;" id="historyEmptyText">
+                    No location history was recorded for this employee for the selected date range.
+                </p>
+            </div>
+
+            <!-- Table Error State -->
+            <div id="historyErrorState" class="tracking-state-box d-none">
+                <div class="tracking-state-icon error">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2">Failed to Load Location History</h5>
+                <p class="text-muted small mx-auto mb-3" style="max-width: 440px;" id="historyErrorMessage">
+                    An error occurred while communicating with the LocationHistory API.
+                </p>
+                <button type="button" class="btn btn-outline-danger btn-sm px-3 py-1 rounded-2" id="btnRetryHistory">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Retry
+                </button>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="history-pagination-wrap" id="historyPaginationWrap">
+            <div class="small text-muted" id="historyCountSummary">
+                Showing 0 to 0 of 0 logs
+            </div>
+            <nav aria-label="Location history pagination">
+                <ul class="pagination pagination-sm pagination-custom mb-0" id="historyPaginationUl">
+                    <!-- Dynamic Pagination Links -->
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- 5. Route Map Popup Modal -->
+<div class="modal fade" id="routeMapModal" tabindex="-1" aria-labelledby="routeMapModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-lg-down">
+        <div class="modal-content border-0 shadow-lg route-modal-content">
+            <!-- Modal Header -->
+            <div class="modal-header px-4 py-3 bg-white border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="route-modal-icon-badge">
+                        <i class="bi bi-geo-alt-fill fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <h5 class="modal-title fw-bold text-dark mb-0" id="routeMapModalTitle">
+                                Employee Route Map
+                            </h5>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-2.5 py-1" id="routeModalPointCount">0 Waypoints</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1" id="routeModalDistance">0 km</span>
+                        </div>
+                        <div class="small text-muted mt-0.5" id="routeModalSubtitle">
+                            Showing chronological movement path plotted from table records
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1 rounded-2 shadow-sm" id="btnRouteModalExternalMap" title="Open complete route in Google Maps">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Open in Google Maps</span>
+                    </a>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+
+            <!-- Modal Body with Map Canvas -->
+            <div class="modal-body p-0 position-relative">
+                <!-- Floating Toolbar: Layer selector, fit bounds, legend -->
+                <div class="route-map-toolbar d-flex align-items-center justify-content-between px-3 py-2 bg-light border-bottom flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="small fw-semibold text-secondary">Layers:</span>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Map Style">
+                            <button type="button" class="btn btn-white border active btn-map-layer" data-layer="street" id="btnLayerStreet">
+                                <i class="bi bi-map me-1 text-primary"></i> Google Streets
+                            </button>
+                            <button type="button" class="btn btn-white border btn-map-layer" data-layer="satellite" id="btnLayerSatellite">
+                                <i class="bi bi-globe-americas me-1 text-success"></i> Satellite
+                            </button>
+                            <button type="button" class="btn btn-white border btn-map-layer" data-layer="osm" id="btnLayerOsm">
+                                <i class="bi bi-layers me-1 text-secondary"></i> OpenStreetMap
+                            </button>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-white border shadow-xs d-inline-flex align-items-center gap-1" id="btnFitRoute" title="Zoom & center route">
+                            <i class="bi bi-arrows-angle-contract"></i>
+                            <span>Fit Route</span>
+                        </button>
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="d-flex align-items-center gap-3 small text-secondary flex-wrap">
+                        <span class="d-inline-flex align-items-center gap-1.5">
+                            <span class="route-legend-badge start"></span>
+                            <span>Start Point</span>
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1.5">
+                            <span class="route-legend-badge waypoint"></span>
+                            <span>Waypoint</span>
+                        </span>
+                        <span class="d-inline-flex align-items-center gap-1.5">
+                            <span class="route-legend-badge end"></span>
+                            <span>Latest Point</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Leaflet / Google Maps Canvas -->
+                <div id="routeMapCanvas"></div>
+
+                <!-- Empty State Overlay (if 0 valid coordinates in table) -->
+                <div id="routeMapEmptyOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-white d-none d-flex flex-column align-items-center justify-content-center p-4" style="z-index: 10;">
+                    <div class="p-3 rounded-circle bg-warning-subtle text-warning mb-3">
+                        <i class="bi bi-geo-alt fs-1"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">No Location Coordinates Available</h5>
+                    <p class="text-muted small text-center mb-0" style="max-width: 420px;">
+                        The current location history table has no valid latitude and longitude coordinates to draw a route path.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer px-4 py-2.5 bg-white border-top d-flex align-items-center justify-content-between">
+                <div class="small text-muted d-flex align-items-center gap-3 flex-wrap">
+                    <span><strong class="text-dark"><i class="bi bi-flag-fill text-success me-1"></i>Start:</strong> <span id="routeModalStartTime">—</span></span>
+                    <span class="text-muted opacity-50">•</span>
+                    <span><strong class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>Latest:</strong> <span id="routeModalEndTime">—</span></span>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm px-4 rounded-2 fw-medium" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Toast Notification Container -->
+<div class="dash-toast-container">
+    <div class="dash-toast" id="dashToast" role="alert" aria-live="assertive" aria-atomic="true">
+        <i class="bi bi-check-circle-fill dash-toast-icon"></i>
+        <span id="dashToastMessage">Action completed successfully.</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="~/js/employee-tracking.js" asp-append-version="true"></script>
+}

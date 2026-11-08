@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - ZamZam Trims (BD) Ltd.</title>
+
+    <!-- Immediate Authentication Guard: Block unauthenticated access without screen flash -->
+    <script>
+        (function () {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.replace('/Account/Login');
+                }
+            } catch (e) {
+                window.location.replace('/Account/Login');
+            }
+        })();
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Dedicated Dashboard Stylesheet -->
+    <link rel="stylesheet" href="~/css/dashboard.css" asp-append-version="true" />
+</head>
+<body class="dashboard-body">
+
+    <!-- Left Navigation Sidebar -->
+    <aside class="dashboard-sidebar" id="dashboardSidebar">
+        <!-- Sidebar Top Header with Brand and Mobile Close Button -->
+        <div class="sidebar-header d-flex justify-content-between align-items-center mb-2 px-1">
+            <a asp-controller="Dashboard" asp-action="Index" class="sidebar-brand text-decoration-none p-0 m-0">
+                <h4 class="brand-title m-0">
+                    <span class="text-primary-blue">ZamZam</span> <span class="text-white-heading">Trims</span>
+                </h4>
+            </a>
+            <button type="button" class="btn-close btn-close-white d-lg-none p-2" id="sidebarCloseBtn" aria-label="Close menu"></button>
+        </div>
+
+        <!-- Menu Navigation Items -->
+        <ul class="sidebar-menu">
+            @{
+                var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+                var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+                var isDashboardActive = string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase) && 
+                                        string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase);
+                var isManageSiteActive = string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase) && 
+                                         (string.Equals(currentAction, "BrandImages", StringComparison.OrdinalIgnoreCase) || 
+                                          string.Equals(currentAction, "AboutUs", StringComparison.OrdinalIgnoreCase) ||
+                                          string.Equals(currentAction, "Quotations", StringComparison.OrdinalIgnoreCase));
+                var isEmployeeActive = string.Equals(currentController, "Employee", StringComparison.OrdinalIgnoreCase);
+            }
+
+            <!-- Dashboard Item -->
+            <li class="menu-item @(isDashboardActive ? "active" : "")">
+                <a asp-controller="Dashboard" asp-action="Index" class="menu-link">
+                    <span class="menu-link-inner">
+                        <span class="menu-icon"><i class="bi bi-grid-fill"></i></span>
+                        <span>Dashboard</span>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Manage Site Item with Submenus -->
+            <li class="menu-item has-submenu @(isManageSiteActive ? "active" : "")">
+                <a href="#manageSiteSubmenu" class="menu-link @(isManageSiteActive ? "" : "collapsed")" data-bs-toggle="collapse" role="button" aria-expanded="@(isManageSiteActive ? "true" : "false")" aria-controls="manageSiteSubmenu">
+                    <span class="menu-link-inner">
+                        <span class="menu-icon"><i class="bi bi-gear"></i></span>
+                        <span>Manage Site</span>
+                    </span>
+                    <i class="bi bi-chevron-down chevron-icon"></i>
+                </a>
+                <div class="collapse submenu-collapse @(isManageSiteActive ? "show" : "")" id="manageSiteSubmenu">
+                    <ul class="submenu-list">
+                        <li class="submenu-item @(isManageSiteActive && string.Equals(currentAction, "BrandImages", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a asp-controller="Dashboard" asp-action="BrandImages" class="submenu-link">
+                                <i class="bi bi-image submenu-icon"></i>
+                                <span>Brand Image</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item @(isManageSiteActive && string.Equals(currentAction, "AboutUs", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a asp-controller="Dashboard" asp-action="AboutUs" class="submenu-link">
+                                <i class="bi bi-info-circle submenu-icon"></i>
+                                <span>About Us</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item @(isManageSiteActive && string.Equals(currentAction, "Quotations", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a asp-controller="Dashboard" asp-action="Quotations" class="submenu-link">
+                                <i class="bi bi-chat-square-quote submenu-icon"></i>
+                                <span>Quotations</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Employee Item with Submenus -->
+            <li class="menu-item has-submenu @(isEmployeeActive ? "active" : "")">
+                <a href="#employeeSubmenu" class="menu-link @(isEmployeeActive ? "" : "collapsed")" data-bs-toggle="collapse" role="button" aria-expanded="@(isEmployeeActive ? "true" : "false")" aria-controls="employeeSubmenu">
+                    <span class="menu-link-inner">
+                        <span class="menu-icon"><i class="bi bi-people"></i></span>
+                        <span>Employee</span>
+                    </span>
+                    <i class="bi bi-chevron-down chevron-icon"></i>
+                </a>
+                <div class="collapse submenu-collapse @(isEmployeeActive ? "show" : "")" id="employeeSubmenu">
+                    <ul class="submenu-list">
+                        <li class="submenu-item @(isEmployeeActive && (string.Equals(currentAction, "List", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase)) ? "active" : "")">
+                            <a asp-controller="Employee" asp-action="List" class="submenu-link">
+                                <i class="bi bi-list-ul submenu-icon"></i>
+                                <span>List</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item @(isEmployeeActive && string.Equals(currentAction, "Create", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a asp-controller="Employee" asp-action="Create" class="submenu-link">
+                                <i class="bi bi-person-plus submenu-icon"></i>
+                                <span>Create</span>
+                            </a>
+                        </li>
+                        <li class="submenu-item @(isEmployeeActive && string.Equals(currentAction, "Tracking", StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            <a asp-controller="Employee" asp-action="Tracking" class="submenu-link">
+                                <i class="bi bi-geo-alt submenu-icon"></i>
+                                <span>Tracking</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Mobile Sidebar Dark Backdrop Overlay -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- Main Content Area Wrapper -->
+    <div class="dashboard-main-wrapper">
+        <!-- Top Sticky Header Navigation -->
+        <header class="dashboard-topbar">
+            <!-- Mobile Toggle & Brand Indicator -->
+            <div class="topbar-left-controls d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-light border d-lg-none sidebar-toggle-btn shadow-sm" id="sidebarToggleBtn" aria-label="Toggle menu" title="Toggle menu">
+                    <i class="bi bi-list fs-5"></i>
+                </button>
+                <div class="d-lg-none fw-bold fs-5 brand-text-mobile ms-1">
+                    <span class="text-primary-blue">ZamZam</span> <span class="text-dark">Trims</span>
+                </div>
+            </div>
+
+            <!-- Topbar Right Actions -->
+            <div class="topbar-actions">
+                <!-- User Profile Avatar & Dropdown -->
+                <div class="dropdown">
+                    <div class="user-avatar-circle" id="userAvatarInitials" data-bs-toggle="dropdown" aria-expanded="false" title="Account Menu">
+                        @{
+                            var initialDisplayName = ViewBag.UserDisplayName as string;
+                            var defaultInitials = "MH";
+                            if (!string.IsNullOrWhiteSpace(initialDisplayName))
+                            {
+                                var parts = initialDisplayName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                if (parts.Length >= 2)
+                                {
+                                    defaultInitials = $"{parts[0][0]}{parts[1][0]}".ToUpper();
+                                }
+                                else if (parts.Length == 1 && parts[0].Length >= 2)
+                                {
+                                    defaultInitials = parts[0].Substring(0, 2).ToUpper();
+                                }
+                            }
+                        }
+                        @defaultInitials
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end user-dropdown-menu shadow-sm" aria-labelledby="userAvatarInitials">
+                        <li class="px-3 py-2 border-bottom">
+                            <div class="fw-bold text-dark" id="userDisplayName">@(ViewBag.UserDisplayName ?? "")</div>
+                            <small class="text-muted text-truncate d-block" id="userDisplayEmail">@(ViewBag.UserDisplayEmail ?? "")</small>
+                        </li>
+                        <li>
+                            <button type="button" class="dropdown-item py-2 small text-danger" onclick="logoutDashboard()">
+                                <i class="bi bi-box-arrow-right me-2"></i> Sign Out
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body Canvas -->
+        <main class="dashboard-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Populate profile dynamically from stored login API response
+        function populateUserProfile() {
+            let name = localStorage.getItem('userDisplayName') || '';
+            let email = localStorage.getItem('userDisplayEmail') || '';
+
+            // If not found in standalone keys, inspect stored user JSON object
+            if (!name || !email) {
+                const userJson = localStorage.getItem('user');
+                if (userJson) {
+                    try {
+                        const user = JSON.parse(userJson);
+                        if (!name) name = user.name || user.Name || user.userName || user.UserName || '';
+                        if (!email) email = user.email || user.Email || '';
+                    } catch (e) {
+                        console.warn('Error reading stored user', e);
+                    }
+                }
+            }
+
+            // Fallback: decode JWT payload if available
+            if (!name || !email) {
+                const token = localStorage.getItem('token');
+                if (token && token.includes('.')) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        if (!name) name = payload.unique_name || payload.name || payload.sub || '';
+                        if (!email) email = payload.email || '';
+                    } catch (e) {}
+                }
+            }
+
+            const nameEl = document.getElementById('userDisplayName');
+            if (nameEl && name) {
+                nameEl.textContent = name;
+            }
+
+            const emailEl = document.getElementById('userDisplayEmail');
+            if (emailEl && email) {
+                emailEl.textContent = email;
+            }
+
+            // Update avatar initials
+            const currentName = name || (nameEl ? nameEl.textContent : '') || '';
+            if (currentName) {
+                const parts = currentName.trim().split(/\s+/);
+                let initials = 'MH';
+                if (parts.length >= 2) {
+                    initials = (parts[0][0] + parts[1][0]).toUpperCase();
+                } else if (parts.length === 1 && parts[0].length >= 2) {
+                    initials = parts[0].substring(0, 2).toUpperCase();
+                } else if (parts.length === 1 && parts[0].length === 1) {
+                    initials = parts[0].toUpperCase();
+                }
+                const avatarEl = document.getElementById('userAvatarInitials');
+                if (avatarEl) {
+                    avatarEl.textContent = initials;
+                }
+            }
+        }
+
+        // Run immediately and on DOMContentLoaded
+        populateUserProfile();
+        document.addEventListener('DOMContentLoaded', function () {
+            populateUserProfile();
+
+            // Mobile Sidebar Interactions
+            const sidebar = document.getElementById('dashboardSidebar');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            const closeBtn = document.getElementById('sidebarCloseBtn');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            function openSidebar() {
+                if (sidebar) sidebar.classList.add('show');
+                if (backdrop) backdrop.classList.add('show');
+                document.body.classList.add('sidebar-open');
+            }
+
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove('show');
+                if (backdrop) backdrop.classList.remove('show');
+                document.body.classList.remove('sidebar-open');
+            }
+
+            if (toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+            if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+            if (backdrop) backdrop.addEventListener('click', closeSidebar);
+
+            // Close on Escape key press
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeSidebar();
+            });
+
+            // Auto-close on menu link click on mobile
+            if (sidebar) {
+                sidebar.querySelectorAll('.menu-link:not([data-bs-toggle]), .submenu-link').forEach(function (link) {
+                    link.addEventListener('click', function () {
+                        if (window.innerWidth < 992) {
+                            closeSidebar();
+                        }
+                    });
+                });
+            }
+        });
+
+        // Sign Out Handler
+        function logoutDashboard() {
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('userDisplayName');
+                localStorage.removeItem('userDisplayEmail');
+                document.cookie = "token=; path=/; max-age=0";
+                document.cookie = "rigidpro_token=; path=/; max-age=0";
+                document.cookie = "userDisplayName=; path=/; max-age=0";
+                document.cookie = "userDisplayEmail=; path=/; max-age=0";
+            } catch (e) {}
+            window.location.href = '/Account/Logout';
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
