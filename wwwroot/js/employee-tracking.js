@@ -1,5 +1,5 @@
 /**
- * Rigid Pro Limited - Employee Tracking & Location History Module
+ * Rigid Pro Soft - Employee Tracking & Location History Module
  * ----------------------------------------------------------------------
  * 1. Employee Search by Name:
  *    GET {ApiBaseUrl}/api/Employees/GetByName/{name}
