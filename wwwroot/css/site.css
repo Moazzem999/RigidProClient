@@ -2072,6 +2072,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
     background-color: #161f30 !important;
 }
 
+[data-bs-theme="dark"] .auth-brand-logo img {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 14px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
 /* Auth Dedicated Layout */
 .auth-layout-body {
     min-height: 100vh;
