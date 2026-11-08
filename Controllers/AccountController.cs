@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using RigidProClient.Models;
 
@@ -15,6 +16,12 @@ public class AccountController : Controller
     }
 
     [HttpGet]
+    public IActionResult Index()
+    {
+        return RedirectToAction(nameof(Login));
+    }
+
+    [HttpGet]
     public IActionResult Login(string? returnUrl = null)
     {
         ViewBag.ApiBaseUrl = _configuration["ApiBaseUrl"] ?? "https://localhost:7148";
@@ -26,7 +33,6 @@ public class AccountController : Controller
         return View(model);
     }
 
-
     [HttpGet]
     public IActionResult Logout()
     {
@@ -36,5 +42,11 @@ public class AccountController : Controller
         Response.Cookies.Delete("userDisplayName");
         Response.Cookies.Delete("userDisplayEmail");
         return RedirectToAction("Login", "Account");
+    }
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ZamZam Trims (BD) Ltd.</title>
+    <title>@(ViewData["Title"] ?? "ZamZam Trims (BD) Ltd.")</title>
     <meta name="description" content="ZamZam Trims (BD) Limited - Sign In to Client & Merchandising Portal." />
 
     <!-- Dark Mode Immediate Initializer (Prevents FOUT) -->
@@ -35,15 +35,10 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="auth-layout-body">
-    <!-- Top Minimal Controls (Back button & Theme toggle) -->
-    <header class="auth-top-controls">
-        <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-light border rounded-pill px-3 d-inline-flex align-items-center gap-2 shadow-sm text-decoration-none">
-            <i class="bi bi-arrow-left"></i>
-            <span class="fw-semibold">Back to Website</span>
-        </a>
-
+    <!-- Top Minimal Controls (Theme toggle) -->
+    <header class="auth-top-controls justify-content-end">
         <!-- Dark / Light Mode Switcher -->
-        <button type="button" id="themeToggleBtn" class="theme-toggle-btn shadow-sm" aria-label="Toggle dark mode" title="Toggle dark / light mode">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-btn shadow-sm ms-auto" aria-label="Toggle dark mode" title="Toggle dark / light mode">
             <i class="bi bi-moon-stars-fill theme-icon-dark"></i>
             <i class="bi bi-sun-fill theme-icon-light"></i>
         </button>
